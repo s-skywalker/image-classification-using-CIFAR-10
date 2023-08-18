@@ -1,0 +1,174 @@
+# import the necessary files 
+
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models 
+import matplotlib.pyplot as plt 
+import numpy as np 
+from keras.utils import to_categorical
+# load the cifar database  
+(X_train, y_train), (X_test,y_test) = datasets.cifar10.load_data()
+X_train.shape
+
+# 50k training samples 
+# 32 by 32 img
+# 3 = rgb channels 
+# test the shape 
+X_test.shape
+(10000, 32, 32, 3)
+y_train.shape
+(50000, 1)
+def plot_samp(X, y, index):
+    plt.figure(figsize = (15, 2))
+    plt.imshow(X_train[5])
+y_train[:5]
+array([[6],
+       [9],
+       [9],
+       [4],
+       [1]], dtype=uint8)
+y_train = y_train.reshape(-1,)
+y_train[:5]
+array([6, 9, 9, 4, 1], dtype=uint8)
+y_test = y_test.reshape(-1,)
+classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
+def plot_sample(X, y, index):
+    plt.figure(figsize = (15,2))
+    plt.imshow(X[index])
+    plt.xlabel(classes[y[index]])
+plot_sample(X_train, y_train, 8)
+
+plot_sample(X_train, y_train, 4)
+
+plot_sample(X_train, y_train, 2)
+
+plot_sample(X_train, y_train, 6)
+
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+Build a simple artificial neural network for image classification
+ann = models.Sequential([
+        layers.Flatten(input_shape=(32,32,3)),
+        layers.Dense(3000, activation='relu'), #3000 neurons
+        layers.Dense(1000, activation='relu'), #1000 neurons
+        layers.Dense(10, activation='softmax') #10 categories of img
+    ])
+
+
+ann.compile(optimizer='SGD',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+ann.fit(X_train, y_train, epochs=5)
+Epoch 1/5
+1563/1563 [==============================] - 83s 53ms/step - loss: 1.8114 - accuracy: 0.3528
+Epoch 2/5
+1563/1563 [==============================] - 83s 53ms/step - loss: 1.6206 - accuracy: 0.4283
+Epoch 3/5
+1563/1563 [==============================] - 83s 53ms/step - loss: 1.5374 - accuracy: 0.4561
+Epoch 4/5
+1563/1563 [==============================] - 83s 53ms/step - loss: 1.4778 - accuracy: 0.4795
+Epoch 5/5
+1563/1563 [==============================] - 83s 53ms/step - loss: 1.4307 - accuracy: 0.4948
+<keras.callbacks.History at 0x1e7df9b34f0>
+from sklearn.metrics import confusion_matrix , classification_report
+import numpy as np
+y_pred = ann.predict(X_test)
+y_pred_classes = [np.argmax(element) for element in y_pred]
+
+print("Classification Report: \n", classification_report(y_test, y_pred_classes))
+313/313 [==============================] - 4s 12ms/step
+Classification Report: 
+               precision    recall  f1-score   support
+
+           0       0.69      0.34      0.45      1000
+           1       0.69      0.53      0.60      1000
+           2       0.33      0.43      0.37      1000
+           3       0.36      0.29      0.32      1000
+           4       0.51      0.21      0.29      1000
+           5       0.40      0.38      0.39      1000
+           6       0.39      0.77      0.52      1000
+           7       0.62      0.47      0.54      1000
+           8       0.57      0.69      0.62      1000
+           9       0.50      0.66      0.57      1000
+
+    accuracy                           0.48     10000
+   macro avg       0.51      0.48      0.47     10000
+weighted avg       0.51      0.48      0.47     10000
+
+Lets design a convolution model for training the images
+cnn = models.Sequential([
+    layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+cnn.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+cnn.fit(X_train, y_train, epochs=10)
+Epoch 1/10
+1563/1563 [==============================] - 32s 20ms/step - loss: 0.2435 - accuracy: 0.9118
+Epoch 2/10
+1563/1563 [==============================] - 32s 20ms/step - loss: 0.2239 - accuracy: 0.9188
+Epoch 3/10
+1563/1563 [==============================] - 32s 20ms/step - loss: 0.2067 - accuracy: 0.9253
+Epoch 4/10
+1563/1563 [==============================] - 32s 20ms/step - loss: 0.2032 - accuracy: 0.9261
+Epoch 5/10
+1563/1563 [==============================] - 32s 21ms/step - loss: 0.1761 - accuracy: 0.9353
+Epoch 6/10
+1563/1563 [==============================] - 31s 20ms/step - loss: 0.1736 - accuracy: 0.9380
+Epoch 7/10
+1563/1563 [==============================] - 31s 20ms/step - loss: 0.1644 - accuracy: 0.9403
+Epoch 8/10
+1563/1563 [==============================] - 32s 21ms/step - loss: 0.1578 - accuracy: 0.9423
+Epoch 9/10
+1563/1563 [==============================] - 31s 20ms/step - loss: 0.1446 - accuracy: 0.9468
+Epoch 10/10
+1563/1563 [==============================] - 30s 19ms/step - loss: 0.1434 - accuracy: 0.9481
+<keras.callbacks.History at 0x1e7e272a6b0>
+CNN > ANN as accuracy was about 70% at the end of epoch
+Computation is less compared to ANN
+cnn.evaluate(X_test,y_test)
+313/313 [==============================] - 3s 9ms/step - loss: 1.4698 - accuracy: 0.6815
+[1.4697916507720947, 0.6815000176429749]
+y_pred = cnn.predict(X_test)
+y_pred[:5]
+313/313 [==============================] - 3s 9ms/step
+array([[2.3328171e-06, 4.7251313e-05, 9.0408001e-05, 9.7025740e-01,
+        1.3703545e-06, 2.7849412e-02, 1.7488849e-03, 8.9278217e-07,
+        5.4076543e-07, 1.4064227e-06],
+       [6.8385378e-02, 1.8343616e-01, 7.1056609e-09, 9.4649943e-10,
+        5.3003899e-12, 8.2246841e-16, 7.6639438e-11, 9.5495705e-17,
+        7.4817789e-01, 4.9104659e-07],
+       [1.1337790e-01, 7.8326002e-02, 5.1742018e-04, 2.5197208e-02,
+        4.7196522e-03, 5.8323791e-04, 9.3792056e-05, 2.2056676e-03,
+        4.3937200e-01, 3.3560717e-01],
+       [8.7913430e-01, 8.3254527e-05, 1.9328977e-04, 5.2732941e-02,
+        3.0849844e-06, 4.3271339e-08, 1.2826868e-07, 2.4344504e-09,
+        6.7840271e-02, 1.2680164e-05],
+       [2.3321576e-11, 1.0558368e-09, 3.6076333e-03, 1.1681784e-03,
+        9.9515718e-01, 1.2387621e-08, 6.7050154e-05, 3.8228743e-12,
+        1.7217427e-14, 9.1369327e-13]], dtype=float32)
+y_classes = [np.argmax(element) for element in y_pred]
+y_classes[:5]
+[3, 8, 8, 0, 4]
+y_test[:5]
+array([3, 8, 8, 0, 6], dtype=uint8)
+plot_sample(X_test, y_test,7)
+
+classes[y_classes[7]]
+'frog'
+plot_sample(X_test, y_test,5)
+
+classes[y_classes[5]]
+'frog'
+plot_sample(X_test, y_test,3)
+
+classes[y_classes[3]]
+'airplane'
